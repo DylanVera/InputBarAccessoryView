@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
     s.summary = "Make powerful and flexible InputAccessoryView's with ease"
     s.description  = "Featuring reactive changes, autocomplete, image paste support and so much more."
     s.requires_arc = true
-    s.swift_versions = '5.0'
+    s.swift_version = '5.0'
 
     # 2 - Version
     s.version = "4.3.2"
