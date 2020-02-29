@@ -180,6 +180,52 @@ open class KeyboardManager: NSObject, UIGestureRecognizerDelegate {
         }
         return self
     }
+
+    @discardableResult
+    open func bind(inputAccessoryView: UIView, tabBar: UITabBar? = nil) -> Self {
+        
+        guard let superview = inputAccessoryView.superview else {
+            fatalError("`inputAccessoryView` must have a superview")
+        }
+        self.inputAccessoryView = inputAccessoryView
+        inputAccessoryView.translatesAutoresizingMaskIntoConstraints = false
+        constraints = NSLayoutConstraintSet(
+            bottom: inputAccessoryView.bottomAnchor.constraint(equalTo: superview.bottomAnchor),
+            left: inputAccessoryView.leftAnchor.constraint(equalTo: superview.leftAnchor),
+            right: inputAccessoryView.rightAnchor.constraint(equalTo: superview.rightAnchor)
+        ).activate()
+        
+        let tabBarHeight = tabBar?.bounds.size.height ?? 0
+        callbacks[.willShow] = { [weak self] (notification) in
+            let keyboardHeight = notification.endFrame.height
+            guard
+                self?.isKeyboardHidden == false,
+                self?.constraints?.bottom?.constant == 0,
+                notification.isForCurrentApp else { return }
+            self?.animateAlongside(notification) {
+                self?.constraints?.bottom?.constant = -keyboardHeight + tabBarHeight
+                self?.inputAccessoryView?.superview?.layoutIfNeeded()
+            }
+        }
+        callbacks[.willChangeFrame] = { [weak self] (notification) in
+            let keyboardHeight = notification.endFrame.height
+            guard
+                self?.isKeyboardHidden == false,
+                notification.isForCurrentApp else { return }
+            self?.animateAlongside(notification) {
+                self?.constraints?.bottom?.constant = -keyboardHeight + tabBarHeight
+                self?.inputAccessoryView?.superview?.layoutIfNeeded()
+            }
+        }
+        callbacks[.willHide] = { [weak self] (notification) in
+            guard notification.isForCurrentApp else { return }
+            self?.animateAlongside(notification) { [weak self] in
+                self?.constraints?.bottom?.constant = 0
+                self?.inputAccessoryView?.superview?.layoutIfNeeded()
+            }
+        }
+        return self
+    }
     
     /// Adds a `UIPanGestureRecognizer` to the `scrollView` to enable interactive dismissal`
     ///
